@@ -24,18 +24,114 @@ data("gasoline")
 ```
 
 
+# Use Kunxuan's code to create spectra for each plot
+
+Waiting for updated code to generate plot-level spectra.
+In the mean time, I am creating a dataframe with dummy data to test the PLSR
+
+```{r}
+
+# need Leah's code
+library(raster)
+library(rhdf5)
+library(neonAOP)
+
+f <- "../NEONdata/D03-Florida/OSBS/2014/spectrometer/reflectance/Subset1NIS1_20140507_150703_atmcor.h5"
+
+bands <- c(1:426)
+
+# create stack from all bands
+# this takes a few minutes to run
+hs <- create_stack(f,bands=bands,epsg=epsg)
+
+# pull out pixels to use
+# this is just the first 100 pixels (the first 100 cols in the first row)
+hs_refl <- hs[1:100,1,1]
+
+# calculate mean spectra for all pixels in raster stack
+hs_mean <- extract_av_refl(hs,aFun=mean)
+
+# remove bad bands
+aop_bands <- read.csv("supplemental_data/neon_aop_bands.csv")
+
+hs_mean[aop_bands$noise == 1] <- NA
+
+plot(hs_mean)
+
+```
+
+## N content data
+
+I will use plot-level kg of N. I am waiting for Jeff to get this? I can also work on it.
+For now, I will create fake N data. Because I only have 1 plot, I will create fake N data for all pixels in the h5 clip.
+
+```{r N-DATA}
+
+# how many "plots" do I have?
+# use the first row of the hs data
+dim(hs_refl)
+
+# fake N data
+n_kg <- round(runif(n=dim(hs_refl)[1],
+              min=5,
+              max=100),2)
+
+n_kg
+
+
+```
+
+## Merge data
+```{r MERGE-DATA}
+
+df <- data.frame(N=n_kg,
+                 refl=I(hs_refl))
+
+```
+
+
 ```{r TRAIN-TEST-GROUPS}
 
 dTrain <- gasoline[1:50,]
 dTest <- gasoline[51:60,]
 
+# test trait groups with neon data
+
+dTrain <- df[1:50,]
+dTest <- df[51:100,]
+
+# indices
+iTrain <- c(1:50)
+iTest <- c(51:100)
+
 ```
 
 ```{r PLS-MODEL}
 
-m1 <- plsr(octane ~ NIR, ncomp = 10, data = dTrain, validation = "LOO")
-
+m1 <- plsr(N ~ refl, data=dTrain, ncomp = 10, validation = "LOO")
 summary(m1)
+
+
+plot(RMSEP(m1), legendpos = "topright")
+
+# plot measured vs. predicted
+plot(m1, ncomp = 8, asp = 1, line = TRUE)
+
+plot(m1, "loadings", comps = 1:2, legendpos = "topleft", xlab = "nm")
+abline(h = 0)
+
+
+```
+
+## Apply model to training data
+
+```{r}
+
+m1_predict <- predict(m1, ncomp = 3, newdata = dTest)
+
+plot(m1_predict ~ dTest$N,
+     main="Predicted vs. Observed")
+abline(0,1)
 
 ```
 

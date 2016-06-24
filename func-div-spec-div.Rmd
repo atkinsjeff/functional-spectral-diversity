@@ -138,3 +138,56 @@ FDresults=dbFD(traits,abundances,corr="lingoes",m=3)
 write.csv(FDresults, "FDresults.csv",quote=F)
 
 ```
+
+###################
+###################
+
+# Testing the PCA analyses on the hdf5 file for florida
+
+```{r load-raster-libraries }
+
+library(raster)
+library(rhdf5)
+library(rgdal)
+library(neonAOP)
+library(RStoolbox)
+
+```
+
+# HYPERSPECTRAL FUN TIME
+
+# Identify file of interest
+
+```{r file }
+f <- "../../data/NEONDI-2016/NEONdata/D03-Florida/OSBS/2014/spectrometer/reflectance/Subset1NIS1_20140507_150703_atmcor.h5"
+```
+
+# ID the projection
+
+```{r define-crs }
+# define the CRS definition by EPSG
+epsg <- 32617
+# create a list of bands
+wavelength <- h5read(f,"wavelength")
+#bands <- c(1:length(wavelength))
+#bands <- c(1:100) # 5 mins
+bands <- c(1:10) # 2 mins
+
+# Create the stack
+stack <- create_stack(f, bands = bands, epsg = epsg)
+
+# Perform the PCA
+
+a=rasterPCA(stack, nComp = 3, nSamples = NULL, maskCheck=FALSE, norm = TRUE, spca = TRUE)
+summary(a$model)
+summary(a$model$loadings)
+```
+
+```{r extract-column-values }
+
+vals <- a$map@data@values
+```
+bandwidth=estimate_bandwidth(data,method="silverman")
+
+hypervol = hypervolume(vals,bandwidth=estimate_bandwidth(vals,method="silverman"))
+summary(hypervol)
