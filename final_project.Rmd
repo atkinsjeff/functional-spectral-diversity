@@ -27,7 +27,7 @@ EXTRACT_ALL <- TRUE
 chm <- raster("../NEONdata/D03-Florida/OSBS/2014/lidar/OSBS_lidarCHM.tif")
 
 # Need to set drive path
-drivePath <- "F:/"
+drivePath <- "D:/"
 ground_height = 2 #max height in (m) of gound return
 # get usable bands
 good_bands_filename <- "supplemental_data/neon_aop_bands.csv"
@@ -48,7 +48,6 @@ plt_summary$center_E <- plt_centroids$easting
 plt_summary$center_N <- plt_centroids$northing
 
 plt_side_rad <- sqrt(plt_centroids$plotSize[1])/2   #half of plot side length
-
 
 # split - run and extract all or run on first plot
 if(EXTRACT_ALL == TRUE){
@@ -72,7 +71,7 @@ if(EXTRACT_ALL == TRUE){
                                plt_side_rad)
 
     # get best? intersecting h5 file -> just one
-    f <- get_h5_filename(plt_ext, drivePath)
+    f <- get_best_h5_filename(plt_ext, drivePath)
 
     # extract processed hyper stack
     bands <- get_good_bands(good_bands_filename)
