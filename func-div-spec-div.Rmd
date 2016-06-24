@@ -178,19 +178,17 @@ bands <- c(1:10) # 2 mins
 #stack <- create_stack(f, bands = bands, epsg = epsg)
 
 # Stack from Kunxuan
-stack <- all_h_data
+stack1 <- all_h_data
 
 # Perform the PCA
-
 a=rasterPCA(stack, nComp = 3, nSamples = 1600, maskCheck=FALSE, norm = TRUE, spca = TRUE)
 
 ```
 
 ```{r extract-column-values }
-
 vals <- a$map@data@values
 ```
 bandwidth=estimate_bandwidth(data,method="silverman")
 
 hypervol = hypervolume(vals,bandwidth=estimate_bandwidth(vals,method="silverman"))
-summary(hypervol)
+hypervol@Volume
