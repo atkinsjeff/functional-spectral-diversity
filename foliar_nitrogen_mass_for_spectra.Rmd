@@ -119,4 +119,5 @@ osbs.plot.n$total.n <- osbs.plot.n$ind * osbs.plot.n$foliar_n_per_tree
 
 ```{r plot-n}
 osbs.plot.n
+write.csv(osbs.plot.n, "supplemental_data/osbs_plot_n.csv")
 ````
