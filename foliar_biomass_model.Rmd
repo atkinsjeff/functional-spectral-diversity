@@ -1,0 +1,58 @@
+---
+title: "Foliar Biomass Model"
+author: "Jeff Atkins"
+date: "June 24, 2016"
+output: html_document
+---
+## Foliar biomass model
+
+This model calculates foliar biomass from canopy height based on equations derived from Jenkins et al. 2003 and is trained on data from Ordway-Swisher Biological Station in Hawthorn, FL.
+
+```{r library-import, echo = FALSE, message = FALSE}
+
+library(ggplot2)
+library(dplyr)
+source("scripts/functions.R")
+```
+
+Diameter-at-breast-height (dbh) is calculated from ground-derived site-specific, and "group" specific canopy height equations in a function that calculates dbh. "Group" is defined here as evergreen or deciduous. The dominant species of this time at OSBS are Long-leaf pine and Turkey Oak. 
+
+```{r dbh-calculation}
+# Import OSBS data
+osbs.dbh <- read.csv("supplemental_data/sarah_osbs_data.csv")
+
+# calculate dbh from ground 
+osbs.dbh$calc.dbh <- calc_dbh(osbs.dbh$ht_m, osbs.dbh$group)
+
+```
+
+## DBH error estimation
+
+Let's look at how our calculated dbh compares to our measured dbh.
+
+```{r dbh-error-estimate, message = FALSE}
+
+
+# subset to pinus palustrus
+pine <- subset(osbs.dbh, group == "e")
+oak <- subset(osbs.dbh, group == "d")
+
+lm.pine <- lm(dbh_cm ~ calc.dbh, data = pine)
+lm.oak <- lm(dbh_cm ~ calc.dbh, data = oak)
+
+# plotting for rational check
+ggplot(osbs.dbh, aes(x = calc.dbh, y = dbh_cm, color =group))+
+     geom_point()+
+     geom_smooth(method = lm, se = FALSE)+
+     scale_color_discrete(name="",
+                         breaks=c("d", "e"),
+                         labels=c("Deciduous", "Coniferious"))+
+     ylab("Measured DBH (cm)")+
+     xlab("Estimated DBH (cm)")
+
+summary(lm.pine)$adj.r.squared
+summary(lm.oak)$adj.r.squared
+
+
+
+```
