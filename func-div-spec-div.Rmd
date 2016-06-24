@@ -182,3 +182,12 @@ a=rasterPCA(stack, nComp = 3, nSamples = NULL, maskCheck=FALSE, norm = TRUE, spc
 summary(a$model)
 summary(a$model$loadings)
 ```
+
+```{r extract-column-values }
+
+vals <- a$map@data@values
+```
+bandwidth=estimate_bandwidth(data,method="silverman")
+
+hypervol = hypervolume(vals,bandwidth=estimate_bandwidth(vals,method="silverman"))
+summary(hypervol)
