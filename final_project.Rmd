@@ -13,6 +13,7 @@ library(neonAOP)
 library(ggplot2)
 library(dplyr)
 source("scripts/extract_h_plots.R")
+source("scripts/process_raw_data.R")
 
 ```
 
@@ -33,19 +34,14 @@ plt_centroids <- readOGR("../NEONdata/D03-Florida/OSBS/vector_data", "OSBS_PlotC
 plt_summary <- data.frame(plt_centroids$plotID)
 plt_summary$center_E <- plt_centroids$easting
 plt_summary$center_N <- plt_centroids$northing
+
 plt_side_rad <- sqrt(plt_centroids$plotSize[1])/2   #half of plot side length
 
-# create extents as a polygon
-plt_num = 1
+# 
+#for (plt_num in 1:length(plt_summary$center_E)) {
+plt_ext <- get_plot_extent(plt_summary$center_E[plt_num], plt_summary$center_N[plt_num], plt_side_rad)
 
-xMin <- plt_summary$center_E[plt_num]-plt_side_rad
-xMax <- plt_summary$center_E[plt_num]+plt_side_rad
-yMin <- plt_summary$center_N[plt_num]-plt_side_rad
-yMax <- plt_summary$center_N[plt_num]+plt_side_rad
-
-plt_ext <- as(extent(c(xMin, xMax, yMin, yMax)), "SpatialPolygons")
-crs(plt_ext) <- CRS("+proj=utm +zone=17 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0")
-
+#}
 
 # get h5 file that intersect extent ---------------??????????? which one to use?
 h5_filename <- extract_plt_filename(plt_ext, drivePath)
@@ -103,43 +99,20 @@ qplot(x=spectra$wavelength,
 ```
 
 
-
-
-
 ## extract usible area from chm in each plot, not done yet
 ```{r}
 chm <- raster("../NEONdata/D03-Florida/OSBS/2014/lidar/OSBS_lidarCHM.tif")
-chm[chm<2] <- NA
-hist(chm)
+# extract CHM within plot
+plt_chm <- crop(chm, extent(plt_ext))
+plt_chm[plt_chm<2] <- NA
 
-# extract CHM within extent
-
-
+plot(plt_chm)
 # use chm to mask out 
 # mask stack
-clip_h_data <- mask(all_h_data, chm)
+clip_h_data <- mask(all_h_data, plt_chm)
 
-# get spectra for each band
-spectra.mask <- extract_av_refl(rgbRast.clip.mask, 
-                           aFun = mean)
-
-spectra.mask <- as.data.frame(spectra.mask)
-
-# read in the wavelength information from the HDF5 file
-wavelengths<- h5read(f, "wavelength")
-
-# convert wavelength to nanometers (nm)
-wavelengths <- wavelengths * 1000
-
-spectra.mask$wavelength <- wavelengths[bands]
-
-# plot spectra
-qplot(x=spectra.mask$wavelength,
-      y=spectra.mask$spectra,
-      xlab="Wavelength (nm)",
-      ylab="Reflectance",
-      main="Spectra for pixels NDVI> .6",
-      ylim = c(0, .35))
+# plot resulting h data to check
+plotRGB(clip_h_data, 19, 34, 58, stretch="lin")
 
 ```
 
