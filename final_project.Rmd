@@ -45,7 +45,7 @@ plt_side_rad <- sqrt(plt_centroids$plotSize[1])/2   #half of plot side length
 
 # 
 #for (plt_num in 1:length(plt_summary$center_E)) {
-plt_num = 1
+plt_num = 2
 
 # extract plot extent
 plt_ext <- get_plot_extent(plt_summary$center_E[plt_num], plt_summary$center_N[plt_num], plt_side_rad)
