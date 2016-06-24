@@ -139,6 +139,27 @@ write.csv(FDresults, "FDresults.csv",quote=F)
 
 ```
 
+
+
+```{r combine fd-and-volume }
+
+# FDresults
+# volume
+
+FDresults$spectral_diversity <- volume[,2]
+as.data.frame(FDresults)
+
+previous_theme<-theme_set(theme_bw())
+
+p <- ggplot(FDresults, aes(x = FDis, y=spectral_diversity))+geom_point(aes(size=1))+geom_abline()+xlab("Functional Diversity (FDis)")+theme(legend.position="none")
+coef(lm(FDis ~ spectral_diversity, data = FDresultselv))
+
+
+
+```
+
+
+
 ###################
 ###################
 
