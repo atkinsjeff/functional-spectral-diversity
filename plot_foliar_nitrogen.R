@@ -1,0 +1,98 @@
+########################
+# Plant Foliar Chemistry Script
+
+source("scripts/functions.R")
+
+################ plot foliar chemistry
+
+# foliar chem data from OSBS
+f <- ("supplemental_data/D03_2014_OSBS_foliarChem.csv")
+
+osbs.chem <- read.csv(f, header = TRUE)
+
+# filtering script to make plots deciduous or conferious
+levels(osbs.chem$plant_group)
+
+length(levels(osbs.chem$plant_group))
+
+osbs.grouping <- aggregate(plant_group ~ plot_id, osbs.chem, FUN = function(x) length(levels(droplevels(x)) ))
+
+# filter to get sites that are only deciduous or evergreen
+
+osbs.regroup <- osbs.grouping[osbs.grouping$plant_group == 1, ]$plot_id
+osbs.filter <- osbs.chem[osbs.chem$plot_id %in% osbs.regroup, ]
+osbs.plot.n.per <- aggregate(totalN ~ plot_id, osbs.filter, FUN = mean)
+osbs.plot.n.per$plant_group <- c("d", "c","c", "d", "d", "d" , "d")
+
+##########
+
+# importing canopy height model raster
+osbs.chm <- raster("../NEONdata/OSBS_lidarCHM.tif")
+
+#eliminating anything below one meter in height
+osbs.chm[osbs.chm <= 1] <- NA
+hist(osbs.chm)
+
+epsg <- 32617 # set manually
+
+# extract plot data
+
+plt_centroids <- readOGR("../NEONdata/D03-Florida/OSBS/vector_data", "OSBS_PlotCentroids")
+
+##### extract list of plots for which we have chemistry data and are homogeonous plots
+
+plt.centroids.filter <- osbs.plot.n.per$plot_id
+plt_centroids <-plt_centroids[plt_centroids$plotID %in% osbs.plot.n.per$plot_id , ]
+
+# make record of plt results
+# extract one plot centroid
+plt_summary <- data.frame(plt_centroids$plotID)
+plt_summary$center_E <- plt_centroids$easting
+plt_summary$center_N <- plt_centroids$northing
+plt_side_rad <- sqrt(plt_centroids$plotSiz[1])/2   #half of plot side length
+
+# create extents as a polygon
+plt_num = 1
+
+xMin <- plt_summary$center_E[plt_num]-plt_side_rad
+xMax <- plt_summary$center_E[plt_num]+plt_side_rad
+yMin <- plt_summary$center_N[plt_num]-plt_side_rad
+yMax <- plt_summary$center_N[plt_num]+plt_side_rad
+
+plt_ext <- as(extent(c(xMin, xMax, yMin, yMax)), "SpatialPolygons")
+crs(plt_ext) <- CRS("+proj=utm +zone=17 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0")
+
+# extractdata
+osbs.height <- extract(osbs.chm,
+                       plt_centroids,
+                       buffer = 20,
+                       fun = mean,
+                       sp = TRUE,
+                       stringsAsFactors = FALSE)   
+
+# this method allows you to retain the spatial extent and combine with canopy N
+osbs.height@data <- data.frame(osbs.height@data,
+                               osbs.plot.n.per[match(osbs.height@data[,"plotID"],
+                                                          osbs.plot.n.per$plot_id),])
+
+# Now we make biomass hopefully
+osbs.height@data$plant_group <- as.factor(osbs.height@data$plant_group)
+osbs.height@data$dbh <- calc_dbh(osbs.height@data$layer, osbs.height@data$plant_group)
+osbs.height@data$biomass.t <- calc_biomass(osbs.height@data$dbh, osbs.height@data$plant_group)
+
+osbs.height@data$biomass.f <-  calc_foliar_biomass(osbs.height@data$biomass.t, osbs.height@data$plant_group)
+
+osbs.height@data$foliar.n <- osbs.height@data$biomass.f * (osbs.height@data$totalN/100)
+
+osbs.plot.n <- data.frame(osbs.height@data$plot_id, osbs.height@data$foliar.n)
+
+names(osbs.plot.n) <-c("plot_id", "foliar_n_per_tree")
+# adding number of indviduals in each plot
+osbs.plot.n$ind <- c(3,5,5,6,5,13,15)
+osbs.plot.n$total.n <- osbs.plot.n$ind * osbs.plot.n$foliar_n_per_tree
+
+
+### total N mass (kg) per plot based on 40 m diameter (1256.637 m^2)
+osbs.plot.n
+
+
