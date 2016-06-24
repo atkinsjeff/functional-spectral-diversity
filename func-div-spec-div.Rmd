@@ -1,0 +1,140 @@
+---
+title: "func-div-spec-div"
+author: "Catherine Hulshof DLP"
+date: "June 23, 2016"
+output: html_document
+---
+
+## Load libraries
+
+```{r load-libraries, eval=FALSE }
+
+library (ggplot2)
+library(FD)
+library(plyr)
+
+```
+
+## Read in raw vegetation and trait data
+
+```{r read-data }
+
+raw_str <- read.csv("../NEONdata/D03-Florida/OSBS/2014/insitu/veg_structure/D03_2014_OSBS_vegStr.csv")
+raw_chem <- read.csv("../NEONdata/D03-Florida/OSBS/2014/insitu/veg_chemistry/D03_2014_OSBS_foliarChem.csv")
+
+```
+
+## Clean up trait data
+
+```{r house-keeping-traits }
+
+# Calculate a new column for SLA and create a single column for scientific name
+
+raw_chem$sla <- 1 / raw_chem$mass_per_area
+raw_chem$genus_species <- do.call(paste, c(raw_chem[c("genus", "species")], sep = "_")) 
+#names(raw_chem)
+
+```
+
+## Reshape trait data
+
+```{r reshape-trait-matrix, eval = FALSE }
+
+# This creates a species x trait matrix by averaging each trait value for each species
+
+trait.matrix=ddply(raw_chem,~genus_species,summarise,sla=mean(sla,na.rm=TRUE),fifteenN=mean(fifteenN,na.rm=TRUE),thirteenC=mean(thirteenC,na.rm=TRUE),totalN=mean(totalN,na.rm=TRUE),totalC=mean(totalC,na.rm=TRUE))
+
+# Remove the column header from the first column (FD package requirement)
+
+names(trait.matrix)[1]<-c("")
+
+# Write the trait matrix to a .txt file (FD pacakage requires txt file)
+
+write.table(trait.matrix,"trait_matrix.txt",sep="\t")
+
+```
+
+## Clean up veg data
+
+```{r house-keeping-abun }
+
+# Remove the white space in the scientific name and replace it with an underscore
+
+raw_str$scientificname = sub(" ", "_", raw_str$scientificname)
+
+```
+
+## Reshape veg data
+
+```{r reshape-veg-matrix, eval=FALSE }
+
+# Reshape the vegetation data to create a plot x species matrix of abundances
+
+raw_str_summary=with(raw_str, table(plotid, scientificname))
+
+# Create a .txt file (FD package requires txt format)
+
+write.table(raw_str_summary, "abundance_matrix.txt", sep="\t")
+
+```
+
+## Load abundance and trait data
+
+```{r load-tables }
+
+traits <- read.table("trait_matrix.txt",header=T,na.strings = "NA")
+abundances <- read.table("abundance_matrix.txt",header=T,na.strings = "NA")
+
+```
+
+
+## Check the dimension of the trait and abundance file
+
+```{r check-dimensions }
+
+T<-dim(traits)[2]
+t2<-dim(traits)[1]
+t2
+C<-dim(abundances)[1]
+c2<-dim(abundances)[2]
+c2
+
+```
+
+
+## Check whether the species names in the trait file match the species names in the abundance file
+
+```{r check-match }
+
+# FD package requires the species in the abundance matrix to be the same and in the same order as the species in the trait matrix
+
+if(dim(abundances)[2]!=dim(traits)[1])stop("error:differentnumberofspeciesin'traits'and'abundances'matrices")
+
+# Determine the mis-matches using the below code:
+
+#mishaps<- colnames(abundances)[which(!(colnames(abundances) %in% rownames (traits)))]
+#mishaps
+#mishaps2 = rownames(traits)[which(!(rownames(traits) %in% colnames (abundances)))]
+#mishaps2
+
+```
+
+
+## Run the FD function. Warning messages will appear for plots/sites with less than three species. 
+
+```{r run-FD, eval = FALSE }
+
+# see dbFD for documentation on correction factors and number of PCA axes to keep.
+
+FDresults=dbFD(traits,abundances,corr="lingoes",m=3)
+
+```
+
+
+## Write the results file to a .csv file
+
+```{r write-results, eval = FALSE }
+
+write.csv(FDresults, "FDresults.csv",quote=F)
+
+```
