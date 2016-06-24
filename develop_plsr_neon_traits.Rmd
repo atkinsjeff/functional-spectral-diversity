@@ -85,7 +85,7 @@ n_kg
 ```{r MERGE-DATA}
 
 df <- data.frame(N=n_kg,
-                 refl=hs_refl)
+                 refl=I(hs_refl))
 
 ```
 
@@ -108,11 +108,30 @@ iTest <- c(51:100)
 
 ```{r PLS-MODEL}
 
-m1 <- plsr(octane ~ NIR, ncomp = 10, data = dTrain, validation = "LOO")
-
+m1 <- plsr(N ~ refl, data=dTrain, ncomp = 10, validation = "LOO")
 summary(m1)
 
-m1 <- plsr(n_kg[iTrain] ~ I(hs_refl)[iTrain], ncomp = 10, validation = "LOO")
+
+plot(RMSEP(m1), legendpos = "topright")
+
+# plot measured vs. predicted
+plot(m1, ncomp = 8, asp = 1, line = TRUE)
+
+plot(m1, "loadings", comps = 1:2, legendpos = "topleft", xlab = "nm")
+abline(h = 0)
+
+
+```
+
+## Apply model to training data
+
+```{r}
+
+m1_predict <- predict(m1, ncomp = 3, newdata = dTest)
+
+plot(m1_predict ~ dTest$N,
+     main="Predicted vs. Observed")
+abline(0,1)
 
 ```
 
