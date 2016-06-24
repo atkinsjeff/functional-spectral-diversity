@@ -1,0 +1,41 @@
+---
+title: "plsr_neon_plot_traits"
+author: "Sarah Graves"
+date: "June 23, 2016"
+output: html_document
+---
+
+# Goal  
+
+Use PLS regression to relate foliar nitrogen (plot level kg/ha) to remote sensing data.
+
+## PLSR model
+
+Decided to use the `PLS` package because it was cited in this paper: http://onlinelibrary.wiley.com/doi/10.1890/13-2110.1/full
+
+```{r LOAD PACKAGES}
+
+library(pls)
+
+# load sample data
+
+data("gasoline")
+
+```
+
+
+```{r TRAIN-TEST-GROUPS}
+
+dTrain <- gasoline[1:50,]
+dTest <- gasoline[51:60,]
+
+```
+
+```{r PLS-MODEL}
+
+m1 <- plsr(octane ~ NIR, ncomp = 10, data = dTrain, validation = "LOO")
+
+summary(m1)
+
+```
+
