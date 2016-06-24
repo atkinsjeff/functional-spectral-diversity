@@ -15,7 +15,7 @@ library(rgeos)
 library(rhdf5)
 library(neonAOP)
 
-extract_plt<-function(clipFile) {
+extract_plt_filename<-function(clip.polygon) {
 
 ########## Inputs #####
 
@@ -109,24 +109,6 @@ h5.files <- list.files(dataDir, pattern = '\\.h5$', full.names = TRUE)
 # clip.polygon <- readOGR(clipFilePath,
 #                         clipFile)
 
-
-#####
-## functions
-## Check Extent Function ####
-# this function below checks to see if a raster falls within a spatial extent
-# inputs: raster file to check, clipShp (spatial )
-checkExtent <- function(aRaster, clipShp){
-  # create polygon extent assign CRS to extent 
-  h5.extent.sp <- as(h5.extent, "SpatialPolygons")
-  # note this is ASSUMING both the extent and the h5 file are in the same CRS
-  crs(rasterExtPoly) <-  crs(clip.polygon)
-  
-  # check to see if the polygons overlap
-  # return a boolean (1= the raster contains pixels within the extent, 0 it doesn't)
-  return(gIntersects(h5.extent.sp, clip.polygon))
-}
-
-
 # initalize counter and list object
 recordRaster <- NA
 i <- 0
@@ -150,4 +132,20 @@ for(afile in h5.files){
 }
 
 recordRaster
+}
+
+#####
+## functions
+## Check Extent Function ####
+# this function below checks to see if a raster falls within a spatial extent
+# inputs: raster file to check, clipShp (spatial )
+checkExtent <- function(aRaster, clipShp){
+  # create polygon extent assign CRS to extent 
+  h5.extent.sp <- as(h5.extent, "SpatialPolygons")
+  # note this is ASSUMING both the extent and the h5 file are in the same CRS
+  crs(rasterExtPoly) <-  crs(clip.polygon)
+  
+  # check to see if the polygons overlap
+  # return a boolean (1= the raster contains pixels within the extent, 0 it doesn't)
+  return(gIntersects(h5.extent.sp, clip.polygon))
 }

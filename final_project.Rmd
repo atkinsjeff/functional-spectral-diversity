@@ -10,33 +10,73 @@ library(raster)
 library(rhdf5)
 library(rgdal)
 library(neonAOP)
+source("scripts/extract_h_plots.R")
 
 ```
 
-```{r extract-data}
+```{r extract-total-data}
 # extract chm
 chm <- raster("../NEONdata/D03-Florida/OSBS/2014/lidar/OSBS_lidarCHM.tif")
+epsg <- 32617 # set manually
 
 # extract plot data
 # plot_clip <- readOGR("../NEONdata/D03-Florida/OSBS/vector_data","ordway-crop-20140507-150703")
-plot_clip_2 <- readOGR("../NEONdata/D03-Florida/OSBS/vector_data", "OSBS_PlotCentroids")
+plt_centroids <- readOGR("../NEONdata/D03-Florida/OSBS/vector_data", "OSBS_PlotCentroids")
 plot(chm)
-plot(plot_clip_2, add=TRUE)
-
-# use plot centroids
+plot(plt_centroids, add=TRUE)
 
 
-# #extract hyperspectral for the area
-f <- "../NEONdata/D03-Florida/OSBS/2014/spectrometer/reflectance/Subset1NIS1_20140507_150703_atmcor.h5"
-epsg <- 32617
+# make record of plt results
+# extract one plot centroid
+plt_summary <- data.frame(plt_centroids$plotID)
+plt_summary$center_E <- plt_centroids$easting
+plt_summary$center_N <- plt_centroids$northing
+plt_side_rad <- sqrt(plt_centroids$plotSize[1])/2   #half of plot side length
 
-# get wavelength
-wavelength <- h5read(f, "wavelength")
+# create extents as a polygon
+plt_num = 1
+xMin <- plt_summary$center_E[plt_num]-plt_side_rad
+xMax <- plt_summary$center_E[plt_num]+plt_side_rad
+yMin <- plt_summary$center_N[plt_num]-plt_side_rad
+yMax <- plt_summary$center_N[plt_num]+plt_side_rad
+
+plt_ext <- as(extent(c(xMin, xMax, yMin, yMax)), "SpatialPolygons")
+crs(plt_ext) <- CRS("+proj=utm +zone=17 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0")
+
+
+# get h5 file that intersect extent ---------------??????????? which one to use?
+h5_filename <- extract_plt_filename(plt_ext)
+
+# use first file
+f <- h5_filename[1]
+
+# get wavelengths and extent from h5 file
+all_wavelength <- h5read(f, "wavelength")
+h5_ext <- create_extent(f)
+h5_ext_poly <- as(extent(h5_ext), "SpatialPolygons")
+crs(h5_ext_poly) <- crs(plt_ext)
+
+# get r and c number from E and N extents
+index_bounds <- calculate_index_extent(extent(plt_ext), h5_ext)
 
 # pick bands
 bands <- c(1:length(wavelength))
 
-all_h_data <- create_stack(f, bands = bands, epsg = epsg)
+# extract h5 file
+b58_cliped <- open_band(fileName=f,
+								bandNum=58,
+								epsg=epsg,
+								subsetData = TRUE,
+								dims=index_bounds)
+
+all_h_data <- create_stack(f, bands = bands, epsg = epsg, subset = TRUE, dims = index_bounds)
+# plot to check
+plot(all_h_data[[58]])
+band_clip <- c(19,34,58)
+plotRGB(all_h_data, 19, 34, 58, stretch="lin")
+
+# get useful wavelengths from sarah's file
+
 
 ```
 
