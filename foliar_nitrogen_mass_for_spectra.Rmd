@@ -111,6 +111,8 @@ osbs.plot.n <- data.frame(osbs.height@data$plot_id, osbs.height@data$foliar.n)
 
 names(osbs.plot.n) <-c("plot_id", "foliar_n_per_tree")
 osbs.plot.n$ind <- c(3,5,5,6,5,13,15)
+osbs.plot.n$plant_group <- c("d", "c","c", "d", "d", "d" , "d")
+
 osbs.plot.n$total.n <- osbs.plot.n$ind * osbs.plot.n$foliar_n_per_tree
 
 
