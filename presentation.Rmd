@@ -5,10 +5,14 @@ date: "June 24, 2016"
 output: html_document
 ---
 # Analysis of canopy nitrogen and functional diversity using hyperspectral imagery and LiDAR
-![Ordway-Swisher Biological Station, Florida](presentation_files/osbs.png)
+![Ordway-Swisher Biological Station, Florida](presentation_images/osbs.png)
 
 ```{r intro-section}
 
 
 
 ```
+
+# Estimating canopy N foliar mass through a combintation of remote sensing, NEON in situ data, modelling, and training data.
+
+![Canopy N workflow](presentation_images/jeff_workflow.png)
