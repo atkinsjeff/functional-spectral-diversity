@@ -15,7 +15,7 @@ library(rgeos)
 library(rhdf5)
 library(neonAOP)
 
-extract_plt_filename<-function(clip.polygon) {
+extract_plt_filename<-function(clip.polygon, drivePath) {
 
 ########## Inputs #####
 
@@ -91,7 +91,7 @@ level <- paste0(site,"_L1")
 
 #clipFile <- paste0(site,"_crop")
 
-drivePath <- "D:/"
+
 #driveName <- "AOP-NEON1-4"
 
 dataDir <- file.path(drivePath,
