@@ -18,13 +18,19 @@ source("scripts/process_raw_data.R")
 ```
 
 ```{r extract-plot-data}
+
+# tag for if statement
+# if TRUE, loops over all plots and saves average spectra
+# if FALSE, extracts hyperspectral clip from first plot
+EXTRACT_ALL <- TRUE
+
 chm <- raster("../NEONdata/D03-Florida/OSBS/2014/lidar/OSBS_lidarCHM.tif")
 
 # Need to set drive path
-drivePath <- "D:/"
+drivePath <- "F:/"
 ground_height = 2 #max height in (m) of gound return
 # get usable bands
-good_bands_filename <- "data/neon_aop_bands.csv"
+good_bands_filename <- "supplemental_data/neon_aop_bands.csv"
 
 
 epsg <- 32617 # set manually
@@ -43,23 +49,74 @@ plt_summary$center_N <- plt_centroids$northing
 
 plt_side_rad <- sqrt(plt_centroids$plotSize[1])/2   #half of plot side length
 
-# 
-#for (plt_num in 1:length(plt_summary$center_E)) {
-plt_num = 1
 
-# extract plot extent
-plt_ext <- get_plot_extent(plt_summary$center_E[plt_num], plt_summary$center_N[plt_num], plt_side_rad)
-
-# get best? intersecting h5 file -> just one
-f <- get_h5_filename(plt_ext, drivePath)
-
-# extract processed hyper stack
-bands <- get_good_bands(good_bands_filename)
-
-all_h_data <- extract_hyper_stack(f, plt_ext, chm, ground_height, bands)
+# split - run and extract all or run on first plot
+if(EXTRACT_ALL == TRUE){
   
-# plot to check 
-plotRGB(all_h_data, 19, 34, 58, stretch="lin")
+  # run for loop
+  print("extracting all plot data, saving average spectra")
+  
+  # initiate object to store average spectra
+  # NOTE: hard coding number of rows, can improve to make more flexible
+  
+  refl_plt_mean <- matrix(NA,ncol=369,nrow=length(plt_summary$center_E))
+  
+  # NOTE: set to run on first 5 plots
+  for (plt_num in 1:5) {
+  #for (plt_num in 1:length(plt_summary$center_E)) {
+    
+    # extract plot extent
+    plt_ext <- get_plot_extent(plt_summary$center_E[plt_num],
+                               plt_summary$center_N[plt_num],
+                               plt_side_rad)
+
+    # get best? intersecting h5 file -> just one
+    f <- get_h5_filename(plt_ext, drivePath)
+
+    # extract processed hyper stack
+    bands <- get_good_bands(good_bands_filename)
+    
+    # this line takes a few minutes to run
+    all_h_data <- extract_hyper_stack(f, plt_ext, chm, ground_height, bands)
+
+    # plot to check
+    plotRGB(all_h_data, 19, 34, 58, stretch="lin")
+
+    # calculate average across all pixles within plot subset
+    
+    tmp <- average_plot_spectra(all_h_data, bands)[,2]
+    refl_plt_mean[plt_num,] <- tmp
+    
+    print(paste("extracting plot #",plt_num))
+    
+  }
+  
+  colnames(refl_plt_mean) <- all_h_data@data@names
+  print("done extracting spectra for all plots")
+    } else {
+      
+      # run first scene
+      print("extracting spectra for first plot")
+      
+      plt_num = 1
+
+      # extract plot extent
+      plt_ext <- get_plot_extent(plt_summary$center_E[plt_num],
+                                 plt_summary$center_N[plt_num],
+                                 plt_side_rad)
+
+      # get best? intersecting h5 file -> just one
+      f <- get_h5_filename(plt_ext, drivePath)
+
+      # extract processed hyper stack
+      bands <- get_good_bands(good_bands_filename)
+
+      all_h_data <- extract_hyper_stack(f, plt_ext, chm, ground_height, bands)
+
+      # plot to check
+      plotRGB(all_h_data, 19, 34, 58, stretch="lin")
+      
+      }
 
 ```
 
