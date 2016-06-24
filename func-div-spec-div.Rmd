@@ -160,6 +160,7 @@ library(RStoolbox)
 
 ```{r file }
 f <- "../../data/NEONDI-2016/NEONdata/D03-Florida/OSBS/2014/spectrometer/reflectance/Subset1NIS1_20140507_150703_atmcor.h5"
+
 ```
 
 # ID the projection
@@ -174,20 +175,20 @@ wavelength <- h5read(f,"wavelength")
 bands <- c(1:10) # 2 mins
 
 # Create the stack
-stack <- create_stack(f, bands = bands, epsg = epsg)
+#stack <- create_stack(f, bands = bands, epsg = epsg)
+
+# Stack from Kunxuan
+stack1 <- all_h_data
 
 # Perform the PCA
+a=rasterPCA(stack, nComp = 3, nSamples = 1600, maskCheck=FALSE, norm = TRUE, spca = TRUE)
 
-a=rasterPCA(stack, nComp = 3, nSamples = NULL, maskCheck=FALSE, norm = TRUE, spca = TRUE)
-summary(a$model)
-summary(a$model$loadings)
 ```
 
 ```{r extract-column-values }
-
 vals <- a$map@data@values
 ```
 bandwidth=estimate_bandwidth(data,method="silverman")
 
 hypervol = hypervolume(vals,bandwidth=estimate_bandwidth(vals,method="silverman"))
-summary(hypervol)
+hypervol@Volume

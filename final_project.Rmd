@@ -59,9 +59,10 @@ if(EXTRACT_ALL == TRUE){
   # NOTE: hard coding number of rows, can improve to make more flexible
   
   refl_plt_mean <- matrix(NA,ncol=369,nrow=length(plt_summary$center_E))
+  volume <- matrix(NA,ncol=2,nrow=length(plt_summary$center_E))
   
   # NOTE: set to run on first 5 plots
-  for (plt_num in 1:5) {
+  for (plt_num in 1:1) {
   #for (plt_num in 1:length(plt_summary$center_E)) {
     
     # extract plot extent
@@ -79,18 +80,28 @@ if(EXTRACT_ALL == TRUE){
     all_h_data <- extract_hyper_stack(f, plt_ext, chm, ground_height, bands)
 
     # plot to check
-    plotRGB(all_h_data, 19, 34, 58, stretch="lin")
+    #plotRGB(all_h_data, 19, 34, 58, stretch="lin")
 
     # calculate average across all pixles within plot subset
     
-    tmp <- average_plot_spectra(all_h_data, bands)[,2]
-    refl_plt_mean[plt_num,] <- tmp
+    refl_plt_mean[plt_num,] <- average_plot_spectra(all_h_data, bands)[,2]
+    
+    # Perform the PCA
+    a=rasterPCA(all_h_data, nComp = 3, nSamples = 1600, maskCheck=FALSE, norm = TRUE, spca = TRUE)
+    vals <- a$map@data@values
+    # Calculate the hypervolume
+    hypervol = hypervolume(vals,bandwidth=estimate_bandwidth(vals,method="silverman"))
+    
+    tmpvol <- c(plt_num,hypervol@Volume)
+    volume[plt_num,] <- tmpvol
     
     print(paste("extracting plot #",plt_num))
     
   }
   
   colnames(refl_plt_mean) <- all_h_data@data@names
+  colnames(volume) <- c("plotid","Hypervolume")
+  
   print("done extracting spectra for all plots")
     } else {
       
