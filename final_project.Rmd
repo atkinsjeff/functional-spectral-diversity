@@ -5,3 +5,51 @@ date: "June 23, 2016"
 output: html_document
 ---
 
+```{r import-libraries}
+library(raster)
+library(rhdf5)
+library(rgdal)
+library(neonAOP)
+
+```
+
+```{r extract-data}
+# extract chm
+chm <- raster("../NEONdata/D03-Florida/OSBS/2014/lidar/OSBS_lidarCHM.tif")
+
+# extract plot data
+# plot_clip <- readOGR("../NEONdata/D03-Florida/OSBS/vector_data","ordway-crop-20140507-150703")
+plot_clip_2 <- readOGR("../NEONdata/D03-Florida/OSBS/vector_data", "OSBS_PlotCentroids")
+plot(chm)
+plot(plot_clip_2, add=TRUE)
+
+# use plot centroids
+
+
+# #extract hyperspectral for the area
+f <- "../NEONdata/D03-Florida/OSBS/2014/spectrometer/reflectance/Subset1NIS1_20140507_150703_atmcor.h5"
+epsg <- 32617
+
+# get wavelength
+wavelength <- h5read(f, "wavelength")
+
+# pick bands
+bands <- c(1:length(wavelength))
+
+all_h_data <- create_stack(f, bands = bands, epsg = epsg)
+
+```
+
+
+## extract usible area from chm in each plot
+```{r}
+
+
+chm[chm<2] <- NA
+hist(chm)
+
+# 
+
+```
+
+
