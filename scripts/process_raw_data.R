@@ -24,7 +24,68 @@ get_plot_extent <- function(plot_centroid_E, plot_centroid_N, plot_side_length) 
 get_h5_filename <-function(plt_ext, drivePath){
   h5_filename <- extract_plt_filename(plt_ext, drivePath)
 
-  f <- h5_filename[1]
+  f <- h5_filename
+}
+
+get_best_h5_filename <- function(plt_ext, drivePath) {
+  f_list <- get_h5_filename(plt_ext, drivePath)
+  print (paste(length(f_list), "found"))
+  returnFile <- NA
+  
+  buffer <- 1
+  repeat {
+    recordRaster <- NA
+    i <- 1
+    # the loop below returns a LIST of the files that have overlapping extent
+    for(afile in f_list) {
+      # get extent of h5 file
+      h5Extent <- create_extent(afile)
+      
+      p_ext <- extent(plt_ext)
+      # create a bigger plot extent
+      xMin <- p_ext@xmin - buffer
+      yMin <- p_ext@ymin - buffer
+      xMax <- p_ext@xmax + buffer
+      yMax <- p_ext@ymax + buffer
+      
+      temp_ext <- extent(c(xMin, xMax, yMin, yMax))
+      
+      # turn into polygon extent object
+      h5.poly <- as(h5Extent, "SpatialPolygons")
+      
+      # this is assuming both are in the same CRS!
+      crs(h5.poly) <-  crs(plt_ext)
+      
+      # get overlap of two extents
+      overlap <- intersect(temp_ext, h5Extent)
+      
+      # check if overlap is the same as temp
+      if (temp_ext == overlap) {
+        recordRaster[i] <- afile
+        i <- i+1
+        #print(i)
+      } else {
+        print("removing one h5 file")
+      }
+      buffer <- buffer+1
+      print(buffer)
+    }
+    
+    
+    
+    if (length(recordRaster) > 1) {
+      print ("have 1+ h5 files")
+    } else if (length(recordRaster) == 1) {
+      print ("found only 1 file, returning")
+      returnFile <- recordRaster
+      break
+    } else {
+      print ("have 0 files ??????, return first file")
+      returnFile <- f_list[1]
+      break
+    }
+  }
+  returnFile
 }
 
 clip_by_chm <- function(all_h_data, chm, chm_lim, plt_ext) {
