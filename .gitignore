@@ -2,4 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
+<<<<<<< HEAD
 *capstone_project.Rproj
+=======
+data
+thursday_pm.Rproj
+>>>>>>> 9f026134292d3f665143254836735ab6692b46bf
