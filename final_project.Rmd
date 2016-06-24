@@ -17,9 +17,15 @@ source("scripts/process_raw_data.R")
 
 ```
 
-```{r extract-total-data}
+```{r extract-plot-data}
+chm <- raster("../NEONdata/D03-Florida/OSBS/2014/lidar/OSBS_lidarCHM.tif")
+
 # Need to set drive path
 drivePath <- "D:/"
+ground_height = 2 #max height in (m) of gound return
+# get usable bands
+good_bands_filename <- "data/neon_aop_bands.csv"
+
 
 epsg <- 32617 # set manually
 
@@ -39,54 +45,26 @@ plt_side_rad <- sqrt(plt_centroids$plotSize[1])/2   #half of plot side length
 
 # 
 #for (plt_num in 1:length(plt_summary$center_E)) {
+plt_num = 1
+
+# extract plot extent
 plt_ext <- get_plot_extent(plt_summary$center_E[plt_num], plt_summary$center_N[plt_num], plt_side_rad)
 
-#}
+# get best? intersecting h5 file -> just one
+f <- get_h5_filename(plt_ext, drivePath)
 
-# get h5 file that intersect extent ---------------??????????? which one to use?
-h5_filename <- extract_plt_filename(plt_ext, drivePath)
+# extract processed hyper stack
+bands <- get_good_bands(good_bands_filename)
 
-# use first file
-f <- h5_filename[1]
-
-# get wavelengths and extent from h5 file
-h5_ext <- create_extent(f)
-h5_ext_poly <- as(extent(h5_ext), "SpatialPolygons")
-crs(h5_ext_poly) <- crs(plt_ext)
-
-# get r and c number from E and N extents
-index_bounds <- calculate_index_extent(extent(plt_ext), h5_ext)
-
-# pick bands
-# bands <- c(1:length(wavelength))
-# get useful wavelengths from sarah's file
-good_bands_file <- read.csv("data/neon_aop_bands.csv", stringsAsFactors=FALSE)
-bands_filterd <- good_bands_file[good_bands_file$noise==0, ]
-
-# #extract h5 file
-# b58_cliped <- open_band(fileName=f,
-# 								bandNum=58,
-# 								epsg=epsg,
-# 								subsetData = TRUE,
-# 								dims=index_bounds)
-
-all_h_data <- create_stack(f, bands = bands_filterd$band, 
-                           epsg = epsg, subset = TRUE, dims = index_bounds)
-# plot to check
-plot(all_h_data[[58]])
-
+all_h_data <- extract_hyper_stack(f, plt_ext, chm, ground_height, bands)
+  
+# plot to check 
 plotRGB(all_h_data, 19, 34, 58, stretch="lin")
-
 
 ```
 
 ```{r average-all-spectra}
-# get spectra for each band
-spectra <- extract_av_refl(all_h_data, 
-                           aFun = mean)
-spectra <- as.data.frame(spectra)
-
-spectra$wavelength <- bands_filterd$nanometer
+spectra <- average_plot_spectra(all_h_data, bands)
 
 # plot spectra
 qplot(x=spectra$wavelength,
@@ -97,23 +75,4 @@ qplot(x=spectra$wavelength,
       #ylim = c(0, .35))
 
 ```
-
-
-## extract usible area from chm in each plot, not done yet
-```{r}
-chm <- raster("../NEONdata/D03-Florida/OSBS/2014/lidar/OSBS_lidarCHM.tif")
-# extract CHM within plot
-plt_chm <- crop(chm, extent(plt_ext))
-plt_chm[plt_chm<2] <- NA
-
-plot(plt_chm)
-# use chm to mask out 
-# mask stack
-clip_h_data <- mask(all_h_data, plt_chm)
-
-# plot resulting h data to check
-plotRGB(clip_h_data, 19, 34, 58, stretch="lin")
-
-```
-
 
