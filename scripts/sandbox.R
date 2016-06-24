@@ -9,7 +9,7 @@ osbs.dbh <- read.csv("supplemental_data/sarah_osbs_data.csv")
 head(osbs.dbh)
 
 # 
-ggplot(osbs.dbh, aes(x = ht_m, y = dbh_cm, color =group))+
+ggplot(osbs.dbh, aes(x = ht_m, y = dbh_cm, color = sp))+
      geom_point()+
      geom_smooth(method = lm, se = FALSE)
 
@@ -47,5 +47,5 @@ ggplot(osbs.dbh, aes(x = dbh_cm, y = calc.dbh))+
 
 osbs.dbh$calc.dbh <- calc_dbh(osbs.dbh$ht_m, osbs.dbh$group)
 osbs.dbh$biomass.t <- calc_dbh(osbs.dbh$calc.dbh, osbs.dbh$group)
-osbs.dbh$biomass.f <- calc_foliar_biomass(osbs.dbh$biomass.t, osbs.dbh$group)
+osbs.dbh$foliar.mass <- calc_foliar_biomass(osbs.dbh$biomass.t, osbs.dbh$group)
 
