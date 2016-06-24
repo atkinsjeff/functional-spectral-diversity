@@ -4,3 +4,11 @@ author: "Jeff Atkins"
 date: "June 24, 2016"
 output: html_document
 ---
+# Analysis of canopy nitrogen and functional diversity using hyperspectral imagery and LiDAR
+![Ordway-Swisher Biological Station, Florida](presentation_files/osbs.png)
+
+```{r intro-section}
+
+
+
+```
