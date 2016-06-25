@@ -21,6 +21,9 @@ output: html_document
 # Extract and process plot-level remote sensing data
 ![Data processing workflow](presentation_images/Kunxuan_workflow.PNG)
 
+# Calculating functional and spectral diversity
+![Diversity workflow](presentation_images/catherine_workflow.png)
+
 ## finding best h5 file
 
 get overlap of two extents
@@ -47,3 +50,42 @@ if (length(recordRaster) == 1) {
 }
 
 ```
+
+## Calculate Functional Dispersion (FDis):
+
+![Functional Dispersion](presentation_images/fd_visual.png)
+
+```{r calc-FD, eval = FALSE }
+
+FDresults=dbFD(traits,
+               abundances,
+               corr="lingoes",
+               m=3)
+
+```
+
+## PCA on raster stack for each plot
+
+```{r pca-raster, eval = FALSE }
+
+a=rasterPCA(stack, 
+            nComp = 3, 
+            maskCheck=FALSE, 
+            norm = TRUE, 
+            spca = TRUE)
+
+```
+
+## Calculate hypervolume
+ 
+ 
+```{r calc-hypervol, eval = FALSE }
+
+hypervol = hypervolume(vals,
+                       bandwidth=estimate_bandwidth(vals,
+                                                    method="silverman"))
+```
+
+## Correlate Functional Diversity and Spectral Diversity
+
+![Correlation](presentation_images/diversity.png)
