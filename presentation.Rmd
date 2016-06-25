@@ -4,3 +4,46 @@ author: "Jeff Atkins"
 date: "June 24, 2016"
 output: html_document
 ---
+# Analysis of canopy nitrogen and functional diversity using hyperspectral imagery and LiDAR
+![Ordway-Swisher Biological Station, Florida](presentation_images/osbs.png)
+
+```{r intro-section}
+
+
+
+```
+
+# Estimating canopy N foliar mass through a combintation of remote sensing, NEON in situ data, modelling, and training data.
+
+![Canopy N workflow](presentation_images/jeff_workflow.png)
+
+
+# Extract and process plot-level remote sensing data
+![Data processing workflow](presentation_images/Kunxuan_workflow.PNG)
+
+## finding best h5 file
+
+get overlap of two extents
+```{r get-overlap, eval=FALSE}
+overlap <- intersect(temp_ext, h5Extent)
+
+```
+
+check if overlap is the same as temp
+
+```{r check-if-overlap, eval=FALSE}
+if (temp_ext == overlap) {
+  recordRaster[i] <- afile
+  i <- i+1
+} 
+```
+
+return remaining file
+```{r return, eval=FALSE}
+# only one file left
+if (length(recordRaster) == 1) {
+  returnFile <- recordRaster
+  break
+}
+
+```
