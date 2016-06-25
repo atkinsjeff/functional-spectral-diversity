@@ -147,12 +147,15 @@ write.csv(FDresults, "FDresults.csv",quote=F)
 # volume
 
 FDresults$spectral_diversity <- volume[,2]
-as.data.frame(FDresults)
+FDresults=as.data.frame(FDresults)
 
 previous_theme<-theme_set(theme_bw())
 
-p <- ggplot(FDresults, aes(x = FDis, y=spectral_diversity))+geom_point(aes(size=1))+geom_abline()+xlab("Functional Diversity (FDis)")+theme(legend.position="none")
-coef(lm(FDis ~ spectral_diversity, data = FDresultselv))
+p <- ggplot(FDresults, aes(x = FDis, y=spectral_diversity)) + geom_point(aes(size=1)) + geom_abline(slope = -57182.83 , intercept = 44419.09) + xlab("Functional Diversity (FDis)") + ylab("Spectral Diversity (hypervolume)")+ theme(legend.position="none")
+p+annotate("text", x = .175, y = 50000, label = "p = 0.051\nr2 = 0.21")
+
+coef(lm(spectral_diversity ~ FDis, data = FDresults))
+summary(lm(spectral_diversity ~ FDis, data = FDresults))
 
 
 
